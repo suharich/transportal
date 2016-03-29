@@ -1,0 +1,163 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'idea'
+// apply plugin: 'eclipse-wtp'
+// apply plugin: 'jetty'
+//apply plugin: 'com.bmuschko.tomcat'
+//apply plugin: 'tomcat8x-2.2.4'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-tomcat-plugin:2.2.4'
+    }
+}
+
+apply plugin: 'com.bmuschko.tomcat'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    def tomcatVersion = '8.0.30'
+    tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
+            "org.apache.tomcat.embed:tomcat-embed-logging-juli:${tomcatVersion}",
+            "org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"
+}
+
+/*tomcat {
+    httpPort = 8080
+    //httpsPort = 8091
+    enableSSL = true
+    contextPath = 'transportal'
+
+    /*users {
+        user {
+            username = 'user1'
+            password = '123456'
+            roles = ['developers', 'admin']
+        }
+
+        user {
+            username = 'user2'
+            password = 'abcdef'
+            roles = ['manager']
+        }
+    }*/
+//}
+
+
+/// see https://github.com/bmuschko/gradle-cargo-plugin and run cargoRunLocal
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-cargo-plugin:2.2.2'
+    }
+}
+apply plugin: 'com.bmuschko.cargo'
+
+dependencies {
+    def cargoVersion = '1.4.5'
+    cargo "org.codehaus.cargo:cargo-core-uberjar:$cargoVersion",
+            "org.codehaus.cargo:cargo-ant:$cargoVersion"
+}
+
+cargo {
+    containerId = 'tomcat8x'
+    port = 8080
+
+    deployable {
+        context = '/'
+    }
+
+    /*remote {
+        hostname = 'cloud.internal.it'
+        username = 'superuser'
+        password = 'secretpwd'
+    }*/
+
+    local {
+        homeDir = file('/opt/tomcat')
+        outputFile = file('build/output.log')
+        timeout = 60000
+
+        containerProperties {
+            property 'cargo.tomcat.ajp.port', 8089
+        }
+    }
+}
+
+// JDK 8
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+/*buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-tomcat-plugin:2.2.4'
+    }
+}*/
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile 'ch.qos.logback:logback-classic:1.1.3'
+    compile 'org.springframework:spring-webmvc:4.2.5.RELEASE'
+    compile 'javax.servlet:jstl:1.2'
+    compile 'org.springframework.data:spring-data-mongodb:1.8.4.RELEASE'
+}
+
+/*dependencies {
+    def tomcatVersion = '8.0.30'
+    tomcat "org.apache.tomcat:catalina:${tomcatVersion}",
+            "org.apache.tomcat:coyote:${tomcatVersion}",
+            "org.apache.tomcat:jasper:${tomcatVersion}"
+}*/
+
+// Embeded Jetty for testing
+/*jettyRun{
+
+    contextPath = "transportal"
+    httpPort = 8080
+}
+
+jettyRunWar{
+    contextPath = "transportal"
+    httpPort = 8080
+}*/
+
+//For Eclipse IDE only
+/* eclipse {
+
+    wtp {
+        component {
+
+            //define context path, default to project folder name
+            contextPath = 'spring4'
+
+        }
+
+    }
+}*/
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.3'
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
